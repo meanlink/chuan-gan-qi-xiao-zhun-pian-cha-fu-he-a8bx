@@ -7,7 +7,9 @@ from src.config.settings import REDIS_URL
 from src.models import Job, Dataset, Report
 from src.services.business import analyze
 from src.services.reports import deliver
+from src.services import ledger
 from src.services.audit import record
+from src.utils.serialization import checksum
 logging.basicConfig(level=logging.INFO)
 def execute(job_id):
     with Session() as db:
@@ -20,6 +22,7 @@ def execute(job_id):
             json.dumps(result,allow_nan=False)
             j.result=result;j.status='completed';j.finished_at=time.time()
             record(db,'worker','job.completed',{'id':j.id})
+            ledger.record(db,'job.completed','job',j.id,ledger.job_completed_payload(j,checksum))
         except Exception as e:
             logging.exception('Analysis failed')
             j.status='failed';j.error=str(e)[:990];j.finished_at=time.time()

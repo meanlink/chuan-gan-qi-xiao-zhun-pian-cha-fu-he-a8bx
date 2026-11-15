@@ -2,7 +2,9 @@ import time, os, csv, io, hashlib, json
 from fastapi import HTTPException
 from src.models import Job, Report, Delivery
 from src.config.settings import ARTIFACT_DIR
+from src.services import ledger
 def create(db, data):
+    ledger.require_intact(db)  # 证据链损坏时拒绝新增分发计划
     j=db.get(Job,data.job_id)
     if not j or j.status!='completed' or not j.approved:
         raise HTTPException(409,'请先选择已完成且获批准的分析结果')
@@ -10,6 +12,7 @@ def create(db, data):
     db.add(r); db.flush()
     return r
 def deliver(db, report):
+    ledger.require_intact(db)  # 证据链损坏时拒绝新增简报分发
     j=db.get(Job,report.job_id)
     if not j or not j.approved: return
     out=io.StringIO()
@@ -30,5 +33,6 @@ def deliver(db, report):
     os.makedirs(ARTIFACT_DIR,exist_ok=True)
     with open(os.path.join(ARTIFACT_DIR,delivery.filename),'wb') as f:f.write(data)
     with open(os.path.join(ARTIFACT_DIR,delivery.filename+'.json'),'w') as f: json.dump({'job':j.name,'params':j.params,'result':j.result,'checksum':delivery.checksum},f,ensure_ascii=False,allow_nan=False)
+    ledger.record(db,'report.delivered','delivery',delivery.id,ledger.delivery_payload(delivery,report))
     report.next_run=time.time()+report.interval_seconds
     return delivery

@@ -2,3 +2,13 @@ import {api} from './client.js';
 export const datasets={list:()=>api('/datasets'),get:id=>api('/datasets/'+id),create:data=>api('/datasets',{method:'POST',body:JSON.stringify(data)})};
 export const jobs={list:()=>api('/jobs'),get:id=>api('/jobs/'+id),create:data=>api('/jobs',{method:'POST',body:JSON.stringify(data)}),approve:id=>api('/jobs/'+id+'/approve',{method:'POST'})};
 export const reports={list:()=>api('/reports'),create:data=>api('/reports',{method:'POST',body:JSON.stringify(data)}),toggle:id=>api('/reports/'+id+'/toggle',{method:'POST'}),deliveries:()=>api('/deliveries')};
+export const integrity={
+ status:()=>api('/integrity/status'),
+ verify:()=>api('/integrity/verify',{method:'POST'}),
+ events:()=>api('/integrity/events'),
+ exports:()=>api('/integrity/exports'),
+ exportNow:()=>api('/integrity/export',{method:'POST'}),
+ publicKey:()=>api('/integrity/public-key'),
+ legacy:()=>api('/integrity/legacy'),
+ importLegacy:data=>api('/integrity/legacy',{method:'POST',body:JSON.stringify(data)}),
+};
